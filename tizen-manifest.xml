@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<manifest xmlns="http://tizen.org/ns/packages" api-version="5.5" package="standalone.bluelime" version="1.0.0">
+    <author email="jongsome@gmail.com" href="http://wissle.egloos.com">Wissle</author>
+    <description>An unofficial telegram messenger, based on Tdlib.</description>
+    <profile name="wearable"/>
+    <ui-application appid="standalone.bluelime" exec="bluelime" multiple="false" nodisplay="false" taskmanage="true" type="capp">
+        <label>bluelime</label>
+        <icon>bluelime.png</icon>
+    </ui-application>
+    <feature name="http://tizen.org/feature/network.internet">true</feature>
+</manifest>
