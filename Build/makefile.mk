@@ -204,7 +204,7 @@ endif
 
 secondary-outputs : $(EDJ_FILES) $(MO_FILES)
 
--include appendix.mk
+include $(BUILD_ROOT)/appendix.mk
 
 app_build : $(OUTPUT_DIR) $(APPFILE) secondary-outputs
 	@echo ========= done =========
