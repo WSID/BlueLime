@@ -1,3 +1,12 @@
+// stdlib includes
+#include <memory>
+
+// tdlib includes
+#include <td/telegram/Client.h>
+#include <td/telegram/td_api.h>
+#include <td/telegram/td_api.hpp>
+
+// local includes
 #include "bluelime.h"
 #include "chat_list_page.h"
 
@@ -11,6 +20,7 @@ typedef struct appdata {
 	Evas_Object *nf;
 	Eext_Circle_Surface *circle_surface;
 	ChatListPage chat_list_page;
+	std::unique_ptr<td::Client> td_client;
 } appdata_s;
 
 static void
@@ -22,7 +32,7 @@ win_delete_request_cb(void *data, Evas_Object *obj, void *event_info)
 static void
 win_back_cb(void *data, Evas_Object *obj, void *event_info)
 {
-	appdata_s *ad = data;
+	appdata_s *ad = (appdata_s *)data;
 	/* Let window go to hide state. */
 	elm_win_lower(ad->win);
 }
@@ -76,8 +86,9 @@ app_create(void *data)
 		Initialize UI resources and application's data
 		If this function returns true, the main loop of application starts
 		If this function returns false, the application is terminated */
-	appdata_s *ad = data;
+	appdata_s *ad = (appdata_s *)data;
 
+	ad->td_client =std::make_unique<td::Client>();
 	create_base_gui(ad);
 
 	return true;
@@ -104,7 +115,9 @@ app_resume(void *data)
 static void
 app_terminate(void *data)
 {
-	/* Release all resources. */
+	appdata_s *ad = (appdata_s *)data;
+
+	ad->td_client.release();
 }
 
 static void
@@ -142,6 +155,7 @@ ui_app_low_memory(app_event_info_h event_info, void *user_data)
 {
 	/*APP_EVENT_LOW_MEMORY*/
 }
+
 
 int
 main(int argc, char *argv[])

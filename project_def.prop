@@ -9,13 +9,16 @@ type = app
 profile = wearable-5.5
 
 # C/CPP Sources
-USER_SRCS = src/bluelime.c src/chat_list_page.c 
+USER_SRCS = src/bluelime.cpp src/chat_list_page.cpp
 
 # EDC Sources
 USER_EDCS =  
 
 # PO Sources
 USER_POS = 
+
+# User Options
+USER_CPP_OPTS = -std=c++14
 
 # User Defines
 USER_DEFS = TIZEN_DEPRECATION DEPRECATION_WARNING 
@@ -26,8 +29,7 @@ USER_UNDEFS =
 USER_CPP_UNDEFS = 
 
 # User Libraries
-USER_LIBS = 
-
+USER_LIBS = tdclient tdcore tddb tdnet tdsqlite tdactor tdutils crypto ssl z :libatomic.a
 # User Objects
 USER_OBJS = 
 
@@ -36,13 +38,13 @@ USER_OBJS =
 USER_C_INC_DIRS = inc 
 USER_INC_FILES = 
 ## C++ Compiler
-USER_CPP_INC_DIRS = 
+USER_CPP_INC_DIRS = ${OUTPUT_DIR}/td_stage/include/
 USER_CPP_INC_FILES = 
 
 USER_INC_DIRS = $(USER_C_INC_DIRS) $(USER_CPP_INC_DIRS)
 
 # User Library Path
-USER_LIB_DIRS = lib 
+USER_LIB_DIRS = lib ${OUTPUT_DIR}/td_stage/lib/
 
 # EDC Resource Path
 USER_EDCS_IMAGE_DIRS = ${OUTPUT_DIR} 
