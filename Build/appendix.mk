@@ -31,13 +31,24 @@ TD_CMAKE_OPTS = \
   -DTIZEN_TD_STAGE_PATH=$(TD_STAGE_PATH) \
   -DCMAKE_TOOLCHAIN_FILE="$(BUILD_ROOT)/crosscompile.cmake" \
   -DCMAKE_AR=$(AR) \
-  -DCMAKE_GENERATOR="MSYS Makefiles" \
   -DCMAKE_MAKE_PROGRAM="$(MAKE)" \
   -DCMAKE_BUILD_TYPE=$(BUILD_CONFIG) \
   -DCMAKE_INSTALL_PREFIX=$(TD_DEST_PATH) \
   -DTD_ENABLE_LTO=ON
 
-#TODO: Let it can be build with linux host systems.
+# Overall:
+# Cross-compilation of tdlib requires, certain target built on native
+# version of tdlib. ("prepare_cross_compiling" target).
+#
+# This will build tdlib twice.
+# One for native version. (Only for prepare_cross_compiling target)
+# The other for tizen runtime.
+
+# Windows Section
+ifeq ($(OS), Windows_NT)
+
+TD_CMAKE_OPTS += \
+  -DCMAKE_GENERATOR="MSYS Makefiles"
 
 $(VCPKG_PATH)/vcpkg.exe :
 	@echo ======================================================
@@ -61,6 +72,25 @@ td_native_build : $(VCPKG_PATH)/packages/openssl_x64-windows/ $(VCPKG_PATH)/pack
 	$(MKDIR) $(MKDIR_OP) $(TD_NATIVE_BUILD_PATH)
 	cd $(TD_NATIVE_BUILD_PATH) ; cmake -A x64 -DCMAKE_TOOLCHAIN_FILE:FILEPATH=../vcpkg/scripts/buildsystems/vcpkg.cmake $(TD_SRC_PATH)
 	cd $(TD_NATIVE_BUILD_PATH) ; cmake --build . --target prepare_cross_compiling --config $(BUILD_CONFIG)
+
+endif # Windows Section
+
+
+# Linux Section
+ifeq ($(shell uname -s), Linux)
+
+td_native_build:
+	@echo ======================================================
+	@echo Building TDLib native build on $(TD_NATIVE_BUILD_PATH)
+	$(MKDIR) $(MKDIR_OP) $(TD_NATIVE_BUILD_PATH)
+	cd $(TD_NATIVE_BUILD_PATH) ; cmake $(TD_SRC_PATH)
+	cd $(TD_NATIVE_BUILD_PATH) ; cmake --build . --target prepare_cross_compiling --config $(BUILD_CONFIG)
+
+endif # Linux Section
+
+
+# TODO: Let it built on Mac.
+
 
 td_build : td_native_build
 	@echo ==========================
