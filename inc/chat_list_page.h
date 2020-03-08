@@ -31,15 +31,13 @@
  *  * Enter already opened chat / channel.
  */
 
-typedef struct _ChatListPage {
+class ChatListPage {
+public:
+  ChatListPage (Evas_Object *parent, Eext_Circle_Surface *circle_surface);
+  ~ChatListPage ();
+
 	Evas_Object *chat_genlist;
 	Evas_Object *chat_cgenlist;
-} ChatListPage;
 
-/* ---- Chat List Page initialization / finalization */
-
-void chat_list_page_init (ChatListPage *self, Evas_Object *parent, Eext_Circle_Surface *circle_surface);
-
-void chat_list_page_fini (ChatListPage *self);
-
+};
 #endif //CHAT_LIST_PAGE_H_

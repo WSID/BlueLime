@@ -28,7 +28,7 @@ class app {
     Evas_Object *conform;
     Evas_Object *naviframe;
     Eext_Circle_Surface *circle_surface;
-    ChatListPage chat_list_page;
+    std::shared_ptr<ChatListPage> chat_list_page;
     std::unique_ptr<td::Client> td_client;
 
     app () : td_client (std::make_unique<td::Client>()) {
@@ -93,9 +93,9 @@ class app {
 	    circle_surface = eext_circle_surface_naviframe_add (naviframe);
 
 	    /* Page 1 */
-	    chat_list_page_init (& chat_list_page, naviframe, circle_surface);
+	    chat_list_page = std::make_shared <ChatListPage> (naviframe, circle_surface);
 
-	    elm_naviframe_item_push(naviframe, NULL, NULL, NULL, chat_list_page.chat_genlist, "empty");
+	    elm_naviframe_item_push(naviframe, NULL, NULL, NULL, chat_list_page->chat_genlist, "empty");
 
 	    /* Show window after base gui is set up */
 	    evas_object_show(win);
