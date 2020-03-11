@@ -9,7 +9,10 @@ type = app
 profile = wearable-5.5
 
 # C/CPP Sources
-USER_SRCS = src/bluelime.cpp src/chat_list_page.cpp
+USER_SRCS = \
+  src/bluelime.cpp \
+  src/chat_list_page.cpp \
+  src/app_auth.cpp
 
 # EDC Sources
 USER_EDCS =  
@@ -21,8 +24,11 @@ USER_POS =
 USER_CPP_OPTS = -std=c++14
 
 # User Defines
-USER_DEFS = TIZEN_DEPRECATION DEPRECATION_WARNING 
-USER_CPP_DEFS = 
+USER_DEFS =
+
+USER_CPP_DEFS = \
+  BLUELIME_TDAPI_ID=${BLUELIME_TDAPI_ID} \
+  BLUELIME_TDAPI_HASH=${BLUELIME_TDAPI_HASH}
 
 # User Undefines
 USER_UNDEFS = 
