@@ -1,3 +1,9 @@
+
+#include <cstdint>
+#include <utility>
+
+#include "app_auth.h"
+
 #include "bluelime.h"
 
 
@@ -18,11 +24,24 @@ app::app () :
     td_query_id(1LU)
 {
     create_base_gui ();
+
+    part_auth = std::make_unique<app_auth> (this);
+
+    td_poller = ecore_poller_add (ECORE_POLLER_CORE, 1,
+        [](void *data) {return static_cast<app*>(data)->poll_td_client(); }, this);
 }
 
 app::~ app () {
     // Doing nothing here!
     // td_client is auto-deleted.
+}
+
+
+std::future<td_api::object_ptr<td_api::Object>>
+app::send (td_api::object_ptr<td_api::Function> td_func) {
+  td_query_id ++;
+  td_client->send ({td_query_id, std::move(td_func)});
+  return td_promises_res[td_query_id].get_future();
 }
 
 // Callback for application lifecycle
@@ -84,6 +103,45 @@ void app::create_base_gui () {
     /* Show window after base gui is set up */
     evas_object_show(win);
 }
+
+
+// Poller
+
+Eina_Bool app::poll_td_client () {
+    bool received = false;
+    do {
+        td::Client::Response response = td_client->receive(0.0);
+
+        received = (response.object != nullptr);
+        if (received) {
+            if (response.id == 0) {
+                std::int32_t id = response.object->get_id();
+
+                if (id == td_api::updateAuthorizationState::ID) {
+                    part_auth->handle (td_api::move_object_as<td_api::updateAuthorizationState> (response.object));
+                }
+                else {
+                    dlog_print (DLOG_WARN, "bluelime", "Unhandled Mesasge ... \n%s",
+                        to_string(response.object).c_str());
+                }
+            }
+            else {
+                dlog_print (DLOG_VERBOSE, "bluelime", "Responsed Query: %llu", response.id);
+                auto iter = td_promises_res.find(response.id);
+                if (iter == td_promises_res.end()) {
+                    dlog_print (DLOG_WARN, "bluelime", "Unknown Query!!");
+                    continue;
+                }
+
+                iter->second.set_value(std::move(response.object));
+                td_promises_res.erase(iter);
+            }
+        }
+    }
+    while (received);
+    return EINA_TRUE;
+}
+
 
 // Callback functions for windows
 void app::on_win_delete_request(Evas_Object *obj) {
