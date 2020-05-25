@@ -16,7 +16,7 @@
 #include <td/telegram/td_api.hpp>
 
 // local include
-#include "bluelime.h"
+#include "bluelime.hpp"
 
 using namespace td;
 

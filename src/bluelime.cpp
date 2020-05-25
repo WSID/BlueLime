@@ -2,9 +2,9 @@
 #include <cstdint>
 #include <utility>
 
-#include "app_auth.h"
+#include "app_auth.hpp"
 
-#include "bluelime.h"
+#include "bluelime.hpp"
 
 
 // ChatListPage -> ChatPage -> StickerPage

@@ -1,4 +1,4 @@
-#include "app_auth.h"
+#include "app_auth.hpp"
 
 // C++ std include
 #include <utility>

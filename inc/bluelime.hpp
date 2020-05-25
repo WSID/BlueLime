@@ -23,7 +23,7 @@
 #include <td/telegram/td_api.hpp>
 
 // local include
-#include "chat_list_page.h"
+#include "chat_list_page.hpp"
 
 #ifdef  LOG_TAG
 #undef  LOG_TAG
