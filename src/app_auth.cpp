@@ -2,6 +2,7 @@
 
 // C++ std include
 #include <utility>
+#include <future>
 
 // Tizen includes
 #include <dlog.h>
@@ -33,7 +34,7 @@
 
 app_auth::app_auth (app *ap) : ap(ap) {}
 
-std::future<td_api::object_ptr<td_api::Object>>
+void
 app_auth::handle (td_api::object_ptr<td_api::updateAuthorizationState> state) {
   switch (state->authorization_state_->get_id()) {
     case td_api::authorizationStateWaitTdlibParameters::ID:
@@ -44,11 +45,10 @@ app_auth::handle (td_api::object_ptr<td_api::updateAuthorizationState> state) {
 
     default:
       dlog_print (DLOG_WARN, "bluelime", "Unhandled Auth State ... \n%s", to_string(state).c_str());
-      return std::future<td_api::object_ptr<td_api::Object>>();
   }
 }
 
-std::future<td_api::object_ptr<td_api::Object>>
+void
 app_auth::wait_tdlib_parameters() {
     char *system_language;
     char *system_model_name;
@@ -85,15 +85,17 @@ app_auth::wait_tdlib_parameters() {
     free (system_model_name);
     free (system_version);
 
-    return ap->send_make <td_api::setTdlibParameters> (std::move(param));
+    td_api::object_ptr<td_api::setTdlibParameters> tf;
+    tf = td_api::make_object<td_api::setTdlibParameters>(std::move(param));
+    ap->send(std::move(tf));
 }
 
-std::future<td_api::object_ptr<td_api::Object>>
+void
 app_auth::wait_encryption_key () {
-    return ap->send(td_api::make_object<td_api::checkDatabaseEncryptionKey>());
+    ap->send(td_api::make_object<td_api::checkDatabaseEncryptionKey>());
 }
 
-std::future<td_api::object_ptr<td_api::Object>>
+void
 app_auth::wait_phone_number () {
-    return std::future<td_api::object_ptr<td_api::Object>>();
+    // do nothing here.
 }

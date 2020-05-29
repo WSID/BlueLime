@@ -37,12 +37,6 @@ app::~ app () {
 }
 
 
-std::future<td_api::object_ptr<td_api::Object>>
-app::send (td_api::object_ptr<td_api::Function> td_func) {
-  td_query_id ++;
-  td_client->send ({td_query_id, std::move(td_func)});
-  return td_promises_res[td_query_id].get_future();
-}
 
 // Callback for application lifecycle
 void app::control(app_control_h app_control) {}
@@ -105,6 +99,16 @@ void app::create_base_gui () {
 }
 
 
+void
+app::send(td_api::object_ptr<td_api::Function> td_func,
+          const app_callback& callback)
+{
+  td_query_id ++;
+  td_callback[td_query_id] = callback;
+  td_client->send ({td_query_id, std::move(td_func)});
+}
+
+
 // Poller
 
 Eina_Bool app::poll_td_client () {
@@ -127,14 +131,15 @@ Eina_Bool app::poll_td_client () {
             }
             else {
                 dlog_print (DLOG_VERBOSE, "bluelime", "Responsed Query: %llu", response.id);
-                auto iter = td_promises_res.find(response.id);
-                if (iter == td_promises_res.end()) {
+                auto iter = td_callback.find(response.id);
+                if (iter == td_callback.end()) {
                     dlog_print (DLOG_WARN, "bluelime", "Unknown Query!!");
                     continue;
                 }
 
-                iter->second.set_value(std::move(response.object));
-                td_promises_res.erase(iter);
+                if (iter->second)
+                  iter->second(std::move(response.object));
+                td_callback.erase(iter);
             }
         }
     }

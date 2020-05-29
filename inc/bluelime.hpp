@@ -2,9 +2,9 @@
 #define __bluelime_H__
 
 // stdlib includes
-#include <future>
 #include <map>
 #include <memory>
+#include <type_traits>
 
 // Tizen includes
 #include <app.h>
@@ -39,6 +39,8 @@ using namespace td;
 
 class app_auth;
 
+typedef std::function<void(td_api::object_ptr<td_api::Object>)> app_callback;
+
 class app {
   public:
     Evas_Object *win;
@@ -49,7 +51,7 @@ class app {
 
   private:
     std::unique_ptr<td::Client> td_client;
-    std::map<uint64_t, std::promise<td_api::object_ptr<td_api::Object>>> td_promises_res;
+    std::map<uint64_t, app_callback> td_callback;
     uint64_t td_query_id;
 
     Ecore_Poller *td_poller;
@@ -60,19 +62,6 @@ class app {
     app ();
 
     ~ app ();
-
-
-    std::future<td_api::object_ptr<td_api::Object>>
-    send (td_api::object_ptr<td_api::Function> td_func);
-
-    template <typename T, typename ... ARGS>
-    inline std::future<td_api::object_ptr<td_api::Object>>
-    send_make (ARGS ... args) {
-      return send (
-          td_api::move_object_as <td_api::Function> (
-              td_api::make_object<T, ARGS...> (std::move(args...))));
-    }
-
 
     // Callback for application lifecycle
     void control(app_control_h app_control);
@@ -91,6 +80,43 @@ class app {
     void ui_low_battery (app_event_info_h event_info);
 
     void ui_low_memory (app_event_info_h event_info);
+
+    // Interaction with telegram.
+
+    /**
+     * send:
+     *
+     * Sends telegram function.
+     *
+     * @td_func: A Telegram function.
+     * @callback: (optional): A Callback to call.
+     */
+    void send (td_api::object_ptr<td_api::Function> td_func,
+               const app_callback& callback = app_callback());
+
+
+    /**
+     * send:
+     *
+     * Sends telegram function, and let a @callback to run when get result.
+     *
+     * @F: type of td_func
+     * @C: type of callback, for (anything (F::ReturnType))
+     * @td_func: A Telegram function.
+     * @callback: A Callback to run.
+     */
+    template <typename F, typename C>
+    void send(td_api::object_ptr<F> td_func, C callback = C()) {
+      td_query_id ++;
+      td_callback[td_query_id] =
+        [callback](td_api::object_ptr<td_api::Object> ret)
+      {
+        // (ret->get_id() == F::ReturnType::element_type::ID);
+        callback(td_api::move_object_as<typename F::ReturnType::element_type>(ret));
+      };
+      td_client->send ({td_query_id, std::move(td_func)});
+    }
+
 
   private:
     void create_base_gui ();

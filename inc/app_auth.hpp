@@ -7,9 +7,6 @@
 #ifndef __APP_AUTH_H__
 #define __APP_AUTH_H__
 
-// C++ stdlib include
-#include <future>
-
 // tdlib includes
 #include <td/telegram/Client.h>
 #include <td/telegram/td_api.h>
@@ -34,17 +31,13 @@ private:
 public:
   app_auth (app *ap);
 
-  std::future<td_api::object_ptr<td_api::Object>>
-  handle (td_api::object_ptr<td_api::updateAuthorizationState> state);
+  void handle (td_api::object_ptr<td_api::updateAuthorizationState> state);
 
-  std::future<td_api::object_ptr<td_api::Object>>
-  wait_tdlib_parameters ();
+  void wait_tdlib_parameters ();
 
-  std::future<td_api::object_ptr<td_api::Object>>
-  wait_encryption_key ();
+  void wait_encryption_key ();
 
-  std::future<td_api::object_ptr<td_api::Object>>
-  wait_phone_number ();
+  void wait_phone_number ();
   /*
 
   void wait_other_device_confirmation ();
