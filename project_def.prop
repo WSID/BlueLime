@@ -10,6 +10,7 @@ profile = wearable-5.5
 
 # C/CPP Sources
 USER_SRCS = \
+  src/uiutil.cpp \
   src/bluelime.cpp \
   src/chat_list_page.cpp \
   src/app_auth.cpp
