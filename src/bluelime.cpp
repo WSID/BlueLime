@@ -90,7 +90,7 @@ void app::create_base_gui () {
     circle_surface = eext_circle_surface_naviframe_add (naviframe);
 
     /* Page 1 */
-    chat_list_page = std::make_shared <ChatListPage> (naviframe, circle_surface);
+    chat_list_page = std::make_shared <ChatListPage> (this, naviframe, circle_surface);
 
     elm_naviframe_item_push(naviframe, NULL, NULL, NULL, chat_list_page->chat_genlist, "empty");
 
@@ -123,6 +123,9 @@ Eina_Bool app::poll_td_client () {
 
                 if (id == td_api::updateAuthorizationState::ID) {
                     part_auth->handle (td_api::move_object_as<td_api::updateAuthorizationState> (response.object));
+                }
+                else if (id == td_api::updateTermsOfService::ID) {
+                  chat_list_page->update_terms_of_service(td_api::move_object_as<td_api::updateTermsOfService>(response.object));
                 }
                 else {
                     dlog_print (DLOG_WARN, "bluelime", "Unhandled Mesasge ... \n%s",
