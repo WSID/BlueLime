@@ -19,6 +19,7 @@
 
 // local include
 #include "bluelime.hpp"
+#include "ui/ui_agreement_page.hpp"
 #include "ui/ui_entry_page.hpp"
 
 using namespace td;
@@ -71,21 +72,17 @@ private:
   void prepare_code_popup();
   void prepare_register_popup();
 
+  void callback_terms_of_service_agree();
+
   static void callback_phone_number_accept(void *data, Evas_Object *object, void *event_info);
   static void callback_code_accept(void *data, Evas_Object *object, void *event_info);
-  static void callback_terms_of_service_agree(void *data, Evas_Object *object, void *event_info);
   static void callback_register_accept (void *data, Evas_Object *object, void *event_info);
   static void callback_ready_to_close (void *data, Evas_Object *object, void *event_info);
 
   ui_entry_page *phone_number_popup;
   ui_entry_page *code_popup;
 
-  Evas_Object *terms_of_serv_cscroll;
-  Evas_Object *terms_of_serv_scroll;
-  Evas_Object *terms_of_serv_box;
-  Evas_Object *terms_of_serv_label_title;
-  Evas_Object *terms_of_serv_label_content;
-  Evas_Object *terms_of_serv_button;
+  ui_agreement_page *terms_of_serv_page;
 
   Evas_Object *register_popup;
   Evas_Object *register_layout;

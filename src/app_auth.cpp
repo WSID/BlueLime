@@ -4,13 +4,15 @@
 #include <algorithm>
 #include <iterator>
 #include <utility>
-#include <future>
+#include <functional>
 #include <sstream>
 
 // Tizen includes
 #include <dlog.h>
 #include <system_info.h>
 #include <system_settings.h>
+
+#include "uiutil.hpp"
 
 #define MACRO_STRINGIFY(A) #A
 
@@ -163,25 +165,11 @@ void
 app_auth::wait_terms_of_service(td_api::object_ptr<td_api::authorizationStateWaitRegistration> state) {
   td_api::object_ptr<td_api::termsOfService> &terms_of_service = state->terms_of_service_;
   td_api::object_ptr<td_api::formattedText> &text = terms_of_service->text_;
+  std::string decorated = decorate_string(*text.get());
+  terms_of_serv_page->set_content (decorated.c_str());
 
-  std::string &tstr = text->text_;
-  std::ostringstream ntext;
-  std::ostream_iterator<std::string> ntext_iter (ntext, "<br>");
-
-  std::string::size_type head = 0;
-  std::string::size_type nhead = 0;
-
-  for (nhead = tstr.find ('\n', head); nhead != std::string::npos; nhead = tstr.find ('\n', head)) {
-    *ntext_iter = tstr.substr (head, nhead - head);
-    head = nhead + 1;
-    ntext_iter++;
-  }
-
-  elm_object_text_set (terms_of_serv_label_content, ntext.str().c_str());
-  // TODO: Apply format on terms of service.
-
-  elm_naviframe_item_simple_push (ap->naviframe, terms_of_serv_scroll);
-  evas_object_show (terms_of_serv_scroll);
+  elm_naviframe_item_simple_push (ap->naviframe, terms_of_serv_page->get_popup());
+  evas_object_show (terms_of_serv_page->get_popup());
 }
 
 void
@@ -226,40 +214,10 @@ app_auth::prepare_code_popup() {
 
 void
 app_auth::prepare_register_popup() {
-  terms_of_serv_scroll = elm_scroller_add (ap->naviframe);
-  terms_of_serv_cscroll = eext_circle_object_scroller_add (terms_of_serv_scroll, ap->circle_surface);
-  elm_scroller_policy_set (terms_of_serv_scroll, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_OFF);
-  eext_circle_object_scroller_policy_set (terms_of_serv_scroll, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_AUTO);
-
-  terms_of_serv_box = elm_box_add (terms_of_serv_scroll);
-  elm_object_content_set (terms_of_serv_scroll, terms_of_serv_box);
-  evas_object_show (terms_of_serv_box);
-
-  terms_of_serv_label_title = elm_label_add (terms_of_serv_box);
-  evas_object_size_hint_weight_set (terms_of_serv_label_title, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-  evas_object_size_hint_align_set (terms_of_serv_label_title, EVAS_HINT_FILL, EVAS_HINT_FILL);
-  evas_object_size_hint_padding_set (terms_of_serv_label_title, 0, 0, 120, 40);
-  elm_object_text_set (terms_of_serv_label_title, "Terms of Service<br>from Telegram");
-  elm_object_style_set (terms_of_serv_label_title, "marker");
-  elm_box_pack_end (terms_of_serv_box, terms_of_serv_label_title);
-  evas_object_show (terms_of_serv_label_title);
-
-  terms_of_serv_label_content = elm_label_add (terms_of_serv_box);
-  evas_object_size_hint_weight_set (terms_of_serv_label_content, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-  evas_object_size_hint_align_set (terms_of_serv_label_content, EVAS_HINT_FILL, EVAS_HINT_FILL);
-  evas_object_size_hint_padding_set (terms_of_serv_label_content, 40, 40, 0, 0);
-  elm_label_line_wrap_set (terms_of_serv_label_content, ELM_WRAP_MIXED);
-  elm_box_pack_end (terms_of_serv_box, terms_of_serv_label_content);
-  evas_object_show (terms_of_serv_label_content);
-
-  terms_of_serv_button = elm_button_add (terms_of_serv_box);
-  evas_object_size_hint_weight_set (terms_of_serv_button, EVAS_HINT_EXPAND, 0);
-  evas_object_size_hint_align_set (terms_of_serv_button, EVAS_HINT_FILL, EVAS_HINT_FILL);
-  elm_object_text_set (terms_of_serv_button, "Agree");
-  elm_object_style_set (terms_of_serv_button, "bottom");
-  evas_object_smart_callback_add (terms_of_serv_button, "clicked", &app_auth::callback_terms_of_service_agree, this);
-  elm_box_pack_end (terms_of_serv_box, terms_of_serv_button);
-  evas_object_show (terms_of_serv_button);
+  terms_of_serv_page = new ui_agreement_page(ap->naviframe, ap->circle_surface);
+  terms_of_serv_page->set_description("Terms of service<br>from Telegram");
+  terms_of_serv_page->on_agree = std::bind(&app_auth::callback_terms_of_service_agree, this);
+  terms_of_serv_page->on_anchor_clicked = ui_agreement_page::def_anchor_clicked_webbrowser;
 
 
   register_popup = elm_popup_add (ap->naviframe);
@@ -313,6 +271,17 @@ app_auth::prepare_register_popup() {
   elm_object_part_content_set (register_popup, "button1", register_accept);
 }
 
+void
+app_auth::callback_terms_of_service_agree () {
+  td_api::object_ptr<td_api::acceptTermsOfService> tdfunc;
+  tdfunc = td_api::make_object<td_api::acceptTermsOfService> ();
+
+  ap->send (std::move(tdfunc),
+    [this] (td_api::object_ptr<td_api::ok> result) {
+      // TODO: Handle error case.
+      wait_registration();
+    });
+}
 
 void
 app_auth::callback_phone_number_accept (void *data, Evas_Object *object, void *event_info) {
@@ -338,20 +307,6 @@ app_auth::callback_code_accept (void *data, Evas_Object *object, void *event_inf
       self->code_popup->get_text());  // code
 
   self->ap->send (std::move(tdfunc));
-}
-
-void
-app_auth::callback_terms_of_service_agree (void *data, Evas_Object *object, void *event_info) {
-  app_auth *self = (app_auth*) data;
-
-  td_api::object_ptr<td_api::acceptTermsOfService> tdfunc;
-  tdfunc = td_api::make_object<td_api::acceptTermsOfService> ();
-
-  self->ap->send (std::move(tdfunc),
-    [self] (td_api::object_ptr<td_api::ok> result) {
-      // TODO: Handle error case.
-      self->wait_registration();
-    });
 }
 
 void
