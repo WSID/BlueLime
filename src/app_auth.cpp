@@ -192,7 +192,7 @@ app_auth::wait_registration () {
 
 void
 app_auth::prepare_phone_number_popup() {
-  phone_number_popup = new ui_entry_popup (ap->naviframe);
+  phone_number_popup = new ui_entry_page (ap->naviframe);
 
   Evas_Object *entry = phone_number_popup->get_entry ();
   elm_entry_single_line_set (entry, EINA_TRUE);
@@ -209,7 +209,7 @@ app_auth::prepare_phone_number_popup() {
 
 void
 app_auth::prepare_code_popup() {
-  code_popup = new ui_entry_popup (ap->naviframe);
+  code_popup = new ui_entry_page (ap->naviframe);
 
   Evas_Object *entry = code_popup->get_entry ();
   elm_entry_single_line_set (entry, EINA_TRUE);

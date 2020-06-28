@@ -13,7 +13,10 @@ USER_SRCS = \
   src/uiutil.cpp \
   src/bluelime.cpp \
   src/chat_list_page.cpp \
-  src/app_auth.cpp
+  src/app_auth.cpp \
+  src/ui/ui_agreement_page.cpp \
+  src/ui/ui_entry_button.cpp \
+  src/ui/ui_entry_page.cpp
 
 # EDC Sources
 USER_EDCS =  

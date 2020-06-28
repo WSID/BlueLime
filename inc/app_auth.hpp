@@ -18,8 +18,8 @@
 #include <Elementary.h>
 
 // local include
-#include "uiutil.hpp"
 #include "bluelime.hpp"
+#include "ui/ui_entry_page.hpp"
 
 using namespace td;
 
@@ -77,8 +77,8 @@ private:
   static void callback_register_accept (void *data, Evas_Object *object, void *event_info);
   static void callback_ready_to_close (void *data, Evas_Object *object, void *event_info);
 
-  ui_entry_popup *phone_number_popup;
-  ui_entry_popup *code_popup;
+  ui_entry_page *phone_number_popup;
+  ui_entry_page *code_popup;
 
   Evas_Object *terms_of_serv_cscroll;
   Evas_Object *terms_of_serv_scroll;

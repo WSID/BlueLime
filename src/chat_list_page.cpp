@@ -7,6 +7,7 @@
 #include <dlog.h>
 
 #include "bluelime.hpp"
+#include "uiutil.hpp"
 
 /* ---- Callbacks: Chat Title getters for Genlist */
 static Evas_Object *_title_genlist (void *data, Evas_Object *genlist, const char *part);
@@ -18,7 +19,7 @@ ChatListPage::ChatListPage (app *ap,
                             Eext_Circle_Surface *circle_surface)
   : ap(ap),
     naviframe(naviframe),
-    update_terms_of_serv_popup (naviframe, circle_surface)
+    update_terms_of_serv_page (naviframe, circle_surface)
 {
 	chat_genlist = elm_genlist_add(naviframe);
 	chat_cgenlist = eext_circle_object_genlist_add(chat_genlist, circle_surface);
@@ -49,7 +50,7 @@ ChatListPage::ChatListPage (app *ap,
 
 	elm_genlist_item_class_unref (ic_chat);
 
-	update_terms_of_serv_popup.set_description ("<title>Terms of Service is updated</title>");
+	update_terms_of_serv_page.set_description ("<title>Terms of Service is updated</title>");
 }
 
 ChatListPage::~ChatListPage() {
@@ -65,8 +66,8 @@ void ChatListPage::update_terms_of_service (td::td_api::object_ptr<td::td_api::u
   content << "</font_size>";
 
 
-  update_terms_of_serv_popup.set_content(content.str().c_str());
-  update_terms_of_serv_popup.on_agree = [terms_of_serv_id, this] () {
+  update_terms_of_serv_page.set_content(content.str().c_str());
+  update_terms_of_serv_page.on_agree = [terms_of_serv_id, this] () {
     td::td_api::object_ptr<td::td_api::acceptTermsOfService> accept;
     accept = td::td_api::make_object<td::td_api::acceptTermsOfService>(terms_of_serv_id);
 
@@ -75,8 +76,8 @@ void ChatListPage::update_terms_of_service (td::td_api::object_ptr<td::td_api::u
     });
   };
 
-  elm_naviframe_item_simple_push(naviframe, update_terms_of_serv_popup.get_popup());
-  evas_object_show (update_terms_of_serv_popup.get_popup());
+  elm_naviframe_item_simple_push(naviframe, update_terms_of_serv_page.get_popup());
+  evas_object_show (update_terms_of_serv_page.get_popup());
 
   dlog_print(DLOG_VERBOSE, "bluelime", "Decorated text:...\n%s", content.str().c_str());
 }

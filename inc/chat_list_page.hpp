@@ -17,7 +17,7 @@
 #include <td/telegram/td_api.h>
 #include <td/telegram/td_api.hpp>
 
-#include "uiutil.hpp"
+#include "ui/ui_agreement_page.hpp"
 
 #ifdef  LOG_TAG
 #undef  LOG_TAG
@@ -55,6 +55,6 @@ private:
   app* ap;
 
   Evas_Object *naviframe;
-  ui_agreement_popup update_terms_of_serv_popup;
+  ui_agreement_page update_terms_of_serv_page;
 };
 #endif //CHAT_LIST_PAGE_H_
