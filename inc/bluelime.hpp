@@ -52,7 +52,9 @@ class app {
   private:
     std::unique_ptr<td::Client> td_client;
     std::map<uint64_t, app_callback> td_callback;
+    std::map<uint64_t, std::function<bool(td::td_api::Update&)>> update_handlers;
     uint64_t td_query_id;
+    uint64_t update_handlers_id;
 
     Ecore_Poller *td_poller;
 
@@ -96,6 +98,37 @@ class app {
 
 
     /**
+     * add_update_handler:
+     *
+     * Adds update handler. The function is expected to accept call of
+     *
+     * > void (const T& subobject)
+     *
+     * @F: Function type of update handler.
+     * @update_handler: An update handler function.
+     *
+     * @returns: Returns an id of handler, for removal after use.
+     */
+    template <typename F>
+    uint64_t add_update_handler(const F& update_handler) {
+      update_handlers_id ++;
+      update_handlers.emplace (update_handlers_id,
+        [this, update_handler] (td::td_api::Update& update) {
+          return td::td_api::downcast_call (update, update_handler);
+        });
+      return update_handlers_id;
+    }
+
+    /**
+     * remove_update_handler:
+     *
+     * Removes update handler.
+     *
+     * @id: Id of update handler.
+     */
+    bool remove_update_handler(uint64_t id);
+
+    /**
      * send:
      *
      * Sends telegram function, and let a @callback to run when get result.
@@ -117,9 +150,29 @@ class app {
       td_client->send ({td_query_id, std::move(td_func)});
     }
 
+    /**
+     * exec:
+     *
+     * Executes telegram function, and gets result back as its return type.
+     *
+     * @F: type of td_func
+     * @td_func: A telegram function
+     */
+    template <typename F>
+    typename F::ReturnType exec (td_api::object_ptr<F>&& td_func) {
+      td_query_id ++;
+      td::Client::Response response = td::Client::execute ({td_query_id, std::move(td_func)});
+
+      return td::td_api::move_object_as <typename F::ReturnType::element_type> (response.object);
+    }
+
+
+
 
   private:
     void create_base_gui ();
+
+    bool handle_update (td::td_api::object_ptr<td::td_api::Object> &object);
 
     // Poller
     Eina_Bool poll_td_client ();

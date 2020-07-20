@@ -108,6 +108,21 @@ app::send(td_api::object_ptr<td_api::Function> td_func,
   td_client->send ({td_query_id, std::move(td_func)});
 }
 
+bool
+app::remove_update_handler (uint64_t id)
+{
+  return (update_handlers.erase(id) != 0);
+}
+
+bool
+app::handle_update(td::td_api::object_ptr<td::td_api::Object> &object) {
+  td::td_api::Update &update = *(td::td_api::Update*) object.get();
+
+  for (const std::pair<uint64_t, std::function<bool(td::td_api::Update&)>> &pair : update_handlers) {
+    if (pair.second(update)) return true;
+  }
+  return false;
+}
 
 // Poller
 
@@ -127,8 +142,8 @@ Eina_Bool app::poll_td_client () {
                 else if (id == td_api::updateTermsOfService::ID) {
                   chat_list_page->update_terms_of_service(td_api::move_object_as<td_api::updateTermsOfService>(response.object));
                 }
-                else {
-                    dlog_print (DLOG_WARN, "bluelime", "Unhandled Mesasge ... \n%s",
+                else if (! handle_update(response.object)) {
+                    dlog_print (DLOG_INFO, "bluelime", "Unhandled Mesasge ... \n%s",
                         to_string(response.object).c_str());
                 }
             }
