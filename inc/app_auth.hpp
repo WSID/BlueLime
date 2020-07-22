@@ -54,10 +54,8 @@ public:
 
   void wait_registration ();
 
+  void ready ();
   /*
-  void wait_state_ready ();
-
-  //
   void wait_password ();
 
   void logging_out ();
@@ -66,6 +64,29 @@ public:
 
   void closed ();
    */
+
+  /**
+   * Called when application got authorized by telegram.
+   */
+  std::function<void(void)> on_app_auth;
+
+  /**
+   * Called when telegram requires user to login.
+   */
+  std::function<void(void)> on_login_needed;
+
+  /**
+   * Called when login is done. This is called only user actually did login.
+   *
+   * If user logged in before, and application does not need to login, then this
+   * is not called.
+   */
+  std::function<void(void)> on_login_done;
+
+  /**
+   * Called when application is ready to use.
+   */
+  std::function<void(void)> on_ready;
 
 private:
   void prepare_phone_number_popup();
@@ -78,6 +99,8 @@ private:
   static void callback_code_accept(void *data, Evas_Object *object, void *event_info);
   static void callback_register_accept (void *data, Evas_Object *object, void *event_info);
   static void callback_ready_to_close (void *data, Evas_Object *object, void *event_info);
+
+  bool is_login_done;
 
   ui_entry_page *phone_number_popup;
   ui_entry_page *code_popup;

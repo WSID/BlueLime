@@ -37,7 +37,7 @@
 
 #define BLUELIME_TDAPI_HASH_STR ( MACRO_STRINGIFY (BLUELIME_TDAPI_HASH) )
 
-app_auth::app_auth (app *ap) : ap(ap) {
+app_auth::app_auth (app *ap) : ap(ap), is_login_done(true) {
   prepare_phone_number_popup ();
   prepare_code_popup ();
   prepare_register_popup();
@@ -115,11 +115,17 @@ void app_auth::wait_tdlib_parameters() {
 
 void
 app_auth::wait_encryption_key () {
-    ap->send(td_api::make_object<td_api::checkDatabaseEncryptionKey>());
+    ap->send(td_api::make_object<td_api::checkDatabaseEncryptionKey>(),
+             [this](td::td_api::object_ptr<td::td_api::ok> ok){
+               on_app_auth();
+             });
 }
 
 void
 app_auth::wait_phone_number () {
+  is_login_done = false;
+  on_login_needed ();
+
   elm_naviframe_item_push(ap->naviframe, NULL, NULL, NULL, phone_number_popup->get_popup(), "empty");
   evas_object_show (phone_number_popup->get_popup ());
 }
@@ -176,6 +182,15 @@ void
 app_auth::wait_registration () {
   elm_naviframe_item_simple_push (ap->naviframe, register_popup);
   evas_object_show (register_popup);
+}
+
+void
+app_auth::ready () {
+  if (! is_login_done) {
+    on_login_done();
+    is_login_done = true;
+  }
+  on_ready();
 }
 
 void
