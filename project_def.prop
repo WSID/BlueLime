@@ -13,6 +13,7 @@ USER_SRCS = \
   src/uiutil.cpp \
   src/bluelime.cpp \
   src/chat_list_page.cpp \
+  src/app_client.cpp \
   src/app_auth.cpp \
   src/ui/ui_agreement_page.cpp \
   src/ui/ui_entry_button.cpp \
