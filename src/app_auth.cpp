@@ -37,14 +37,23 @@
 
 #define BLUELIME_TDAPI_HASH_STR ( MACRO_STRINGIFY (BLUELIME_TDAPI_HASH) )
 
-app_auth::app_auth (app *ap) : ap(ap), is_login_done(true) {
+app_auth::app_auth (app* ap, app_client& client) :
+    ap(ap),
+    client(client),
+    is_login_done(true) {
   prepare_phone_number_popup ();
   prepare_code_popup ();
   prepare_register_popup();
+
+  handler_update = client.add_update_handler (
+    [this](td::td_api::Update& update) {
+      if (update.get_id () == td::td_api::updateAuthorizationState::ID)
+        handle (static_cast<td::td_api::updateAuthorizationState&>(update));
+    });
 }
 
-void app_auth::handle (typename td_api::object_ptr<td_api::updateAuthorizationState> state) {
-  std::int32_t tid = state->authorization_state_->get_id();
+void app_auth::handle (td::td_api::updateAuthorizationState& state) {
+  std::int32_t tid = state.authorization_state_->get_id();
 
   switch (tid) {
     case td_api::authorizationStateWaitTdlibParameters::ID:
@@ -60,11 +69,11 @@ void app_auth::handle (typename td_api::object_ptr<td_api::updateAuthorizationSt
       break;
 
     case td_api::authorizationStateWaitCode::ID:
-      wait_code(td_api::move_object_as <td_api::authorizationStateWaitCode> (state->authorization_state_));
+      wait_code(td_api::move_object_as <td_api::authorizationStateWaitCode> (state.authorization_state_));
       break;
 
     case td_api::authorizationStateWaitRegistration::ID:
-      wait_terms_of_service (td_api::move_object_as <td_api::authorizationStateWaitRegistration> (state->authorization_state_));
+      wait_terms_of_service (td_api::move_object_as <td_api::authorizationStateWaitRegistration> (state.authorization_state_));
       break;
 
     default:
@@ -110,15 +119,15 @@ void app_auth::wait_tdlib_parameters() {
 
     td_api::object_ptr<td_api::setTdlibParameters> tf;
     tf = td_api::make_object<td_api::setTdlibParameters>(std::move(param));
-    ap->send(std::move(tf));
+    client.send(std::move(tf));
 }
 
 void
 app_auth::wait_encryption_key () {
-    ap->send(td_api::make_object<td_api::checkDatabaseEncryptionKey>(),
-             [this](td::td_api::object_ptr<td::td_api::ok> ok){
-               on_app_auth();
-             });
+    client.send(td_api::make_object<td_api::checkDatabaseEncryptionKey>(),
+                [this](td::td_api::object_ptr<td::td_api::ok> ok){
+                  on_app_auth();
+                });
 }
 
 void
@@ -291,7 +300,7 @@ app_auth::callback_terms_of_service_agree () {
   td_api::object_ptr<td_api::acceptTermsOfService> tdfunc;
   tdfunc = td_api::make_object<td_api::acceptTermsOfService> ();
 
-  ap->send (std::move(tdfunc),
+  client.send (std::move(tdfunc),
     [this] (td_api::object_ptr<td_api::ok> result) {
       // TODO: Handle error case.
       wait_registration();
@@ -310,7 +319,7 @@ app_auth::callback_phone_number_accept (void *data, Evas_Object *object, void *e
       self->phone_number_popup->get_text(),  // phone number
       std::move(settings));                  // authentification settings
 
-  self->ap->send (std::move(tdfunc));
+  self->client.send (std::move(tdfunc));
 }
 
 void
@@ -321,7 +330,7 @@ app_auth::callback_code_accept (void *data, Evas_Object *object, void *event_inf
   tdfunc = td_api::make_object<td_api::checkAuthenticationCode> (
       self->code_popup->get_text());  // code
 
-  self->ap->send (std::move(tdfunc));
+  self->client.send (std::move(tdfunc));
 }
 
 void
@@ -333,5 +342,5 @@ app_auth::callback_register_accept (void *data, Evas_Object *object, void *event
       self->register_first_name->get_text(),
       self->register_last_name->get_text());
 
-  self->ap->send (std::move (tdfunc));
+  self->client.send (std::move (tdfunc));
 }

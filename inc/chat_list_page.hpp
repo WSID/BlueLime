@@ -17,6 +17,7 @@
 #include <td/telegram/td_api.h>
 #include <td/telegram/td_api.hpp>
 
+#include "app_client.hpp"
 #include "ui/ui_agreement_page.hpp"
 
 #ifdef  LOG_TAG
@@ -42,7 +43,7 @@ class app;
 
 class ChatListPage {
 public:
-  ChatListPage (app* ap, Evas_Object *naviframe, Eext_Circle_Surface *circle_surface);
+  ChatListPage (app_client& client, Evas_Object *naviframe, Eext_Circle_Surface *circle_surface);
   ~ChatListPage ();
 
   void update_terms_of_service(td::td_api::object_ptr<td::td_api::updateTermsOfService> res);
@@ -52,7 +53,7 @@ public:
 
 
 private:
-  app* ap;
+  app_client& client;
 
   Evas_Object *naviframe;
   ui_agreement_page update_terms_of_serv_page;

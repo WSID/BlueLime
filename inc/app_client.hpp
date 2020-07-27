@@ -39,6 +39,8 @@ typedef std::function<void(td::td_api::Update&)> app_update_callback;
  */
 class app_client {
   public:
+    app_client();
+
     /**
      * send:
      *
@@ -103,10 +105,7 @@ class app_client {
      * poller_func
      *
      * A function that run by poller.
-     *
-     * This rides on event loop, with client, so this will be running for long time.
      */
-    [[noreturn]]
     void poller_func ();
 
     std::unique_ptr<td::Client> client;
@@ -138,7 +137,7 @@ void app_client::send (td::td_api::object_ptr<TF> td_func, F callback) {
   callbacks.emplace (query_id,
     [c {std::move(callback)} ]
     (td::td_api::object_ptr<td::td_api::Object> result) {
-      c(td::td_api::move_object_as<R>(result));
+      c(td::td_api::move_object_as<typename R::element_type>(result));
     } );
   client->send ({query_id, std::move(td_func)});
 }

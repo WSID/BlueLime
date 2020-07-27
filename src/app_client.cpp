@@ -2,6 +2,12 @@
 
 #include <dlog.h>
 
+app_client::app_client()
+  : client (new td::Client())
+  , query_id (0)
+  , update_handler_id (0)
+  , poller_running (false) {}
+
 int app_client::add_update_handler (app_update_callback callback) {
   if (! callback) return 0;
 
@@ -50,10 +56,12 @@ void app_client::poller_func () {
       }
     }
   }
+  poller_running = false;
 }
 
 bool app_client::run_poller () {
-  if (poller) return false;
+  if (poller_running) return false;
 
   poller = std::thread(&app_client::poller_func, this);
+  return true;
 }

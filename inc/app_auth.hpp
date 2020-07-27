@@ -18,6 +18,7 @@
 #include <Elementary.h>
 
 // local include
+#include "app_client.hpp"
 #include "bluelime.hpp"
 #include "ui/ui_agreement_page.hpp"
 #include "ui/ui_entry_page.hpp"
@@ -33,12 +34,13 @@ class app;
  */
 class app_auth {
 private:
-  app *ap;
+  app_client& client;
+  app* ap;
 
 public:
-  app_auth (app *ap);
+  app_auth (app* ap, app_client& client);
 
-  void handle (td_api::object_ptr<td_api::updateAuthorizationState> state);
+  void handle (td::td_api::updateAuthorizationState& state);
 
   void wait_tdlib_parameters ();
 
@@ -99,6 +101,8 @@ private:
   static void callback_code_accept(void *data, Evas_Object *object, void *event_info);
   static void callback_register_accept (void *data, Evas_Object *object, void *event_info);
   static void callback_ready_to_close (void *data, Evas_Object *object, void *event_info);
+
+  int handler_update;
 
   bool is_login_done;
 

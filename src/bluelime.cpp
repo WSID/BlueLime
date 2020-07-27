@@ -19,21 +19,15 @@ class mf_2_cb {
     }
 };
 
-app::app () :
-    td_client (std::make_unique<td::Client>()),
-    td_query_id(1LU)
+app::app ()
 {
+    part_client.run_poller();
     create_base_gui ();
+    part_auth = std::make_unique<app_auth> (this, part_client);
 
-    part_auth = std::make_unique<app_auth> (this);
-
-    td_poller = ecore_poller_add (ECORE_POLLER_CORE, 1,
-        [](void *data) {return static_cast<app*>(data)->poll_td_client(); }, this);
 }
 
 app::~ app () {
-    // Doing nothing here!
-    // td_client is auto-deleted.
 }
 
 
@@ -90,81 +84,13 @@ void app::create_base_gui () {
     circle_surface = eext_circle_surface_naviframe_add (naviframe);
 
     /* Page 1 */
-    chat_list_page = std::make_shared <ChatListPage> (this, naviframe, circle_surface);
+    chat_list_page = std::make_shared <ChatListPage> (part_client, naviframe, circle_surface);
 
     elm_naviframe_item_push(naviframe, NULL, NULL, NULL, chat_list_page->chat_genlist, "empty");
 
     /* Show window after base gui is set up */
     evas_object_show(win);
 }
-
-
-void
-app::send(td_api::object_ptr<td_api::Function> td_func,
-          const app_callback& callback)
-{
-  td_query_id ++;
-  td_callback[td_query_id] = callback;
-  td_client->send ({td_query_id, std::move(td_func)});
-}
-
-bool
-app::remove_update_handler (uint64_t id)
-{
-  return (update_handlers.erase(id) != 0);
-}
-
-bool
-app::handle_update(td::td_api::object_ptr<td::td_api::Object> &object) {
-  td::td_api::Update &update = *(td::td_api::Update*) object.get();
-
-  for (const std::pair<uint64_t, std::function<bool(td::td_api::Update&)>> &pair : update_handlers) {
-    if (pair.second(update)) return true;
-  }
-  return false;
-}
-
-// Poller
-
-Eina_Bool app::poll_td_client () {
-    bool received = false;
-    do {
-        td::Client::Response response = td_client->receive(0.0);
-
-        received = (response.object != nullptr);
-        if (received) {
-            if (response.id == 0) {
-                std::int32_t id = response.object->get_id();
-
-                if (id == td_api::updateAuthorizationState::ID) {
-                    part_auth->handle (td_api::move_object_as<td_api::updateAuthorizationState> (response.object));
-                }
-                else if (id == td_api::updateTermsOfService::ID) {
-                  chat_list_page->update_terms_of_service(td_api::move_object_as<td_api::updateTermsOfService>(response.object));
-                }
-                else if (! handle_update(response.object)) {
-                    dlog_print (DLOG_INFO, "bluelime", "Unhandled Mesasge ... \n%s",
-                        to_string(response.object).c_str());
-                }
-            }
-            else {
-                dlog_print (DLOG_VERBOSE, "bluelime", "Responsed Query: %llu", response.id);
-                auto iter = td_callback.find(response.id);
-                if (iter == td_callback.end()) {
-                    dlog_print (DLOG_WARN, "bluelime", "Unknown Query!!");
-                    continue;
-                }
-
-                if (iter->second)
-                  iter->second(std::move(response.object));
-                td_callback.erase(iter);
-            }
-        }
-    }
-    while (received);
-    return EINA_TRUE;
-}
-
 
 // Callback functions for windows
 void app::on_win_delete_request(Evas_Object *obj) {
